@@ -1,0 +1,25 @@
+---
+- name: Check whether UFW is installed
+  ansible.builtin.command: dpkg-query -W -f='${Status}' ufw
+  register: ufw_package
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Read UFW status
+  ansible.builtin.command: ufw status verbose
+  register: ufw_status
+  changed_when: false
+  failed_when: false
+  become: true
+  when: ufw_package.rc == 0
+
+- name: Record firewall compliance result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'FW-01',
+      'category': 'Firewall',
+      'title': 'UFW is installed, active and denies incoming traffic by default',
+      'status': 'COMPLIANT' if (ufw_package.rc == 0 and 'Status: active' in (ufw_status.stdout | default('')) and 'Default: deny (incoming)' in (ufw_status.stdout | default(''))) else 'NON_COMPLIANT',
+      'detail': ufw_status.stdout | default('UFW is not installed')
+    } ] }}"

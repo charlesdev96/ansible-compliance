@@ -1,0 +1,22 @@
+---
+- name: Inspect configured file permissions
+  ansible.builtin.stat:
+    path: "{{ item.key }}"
+  loop: "{{ compliance_file_permissions | dict2items }}"
+  register: permission_checks
+  become: true
+
+- name: Build file permission findings
+  ansible.builtin.set_fact:
+    permission_findings: "{{ permission_findings | default([]) + ([item.item.key ~ ' expected ' ~ item.item.value ~ ' but observed ' ~ (item.stat.mode | default('missing'))] if (not item.stat.exists or item.stat.mode != item.item.value) else []) }}"
+  loop: "{{ permission_checks.results }}"
+
+- name: Record file permission result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'FILE-01',
+      'category': 'File permissions',
+      'title': 'Critical account files have the required permissions',
+      'status': 'COMPLIANT' if (permission_findings | default([]) | length == 0) else 'NON_COMPLIANT',
+      'detail': (permission_findings | default(['Configured file permissions match policy']) | join('; '))
+    } ] }}"

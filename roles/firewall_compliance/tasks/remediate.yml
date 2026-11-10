@@ -1,0 +1,40 @@
+---
+- name: Require explicit approval before changing firewall
+  ansible.builtin.assert:
+    that:
+      - compliance_allow_firewall_remediation | bool
+    fail_msg: >-
+      Firewall remediation is disabled by default. Confirm the actual SSH
+      port and access path, then explicitly set
+      compliance_allow_firewall_remediation=true.
+
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  become: true
+
+- name: Allow the configured SSH port before enabling UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ compliance_ssh_port | string }}"
+    proto: tcp
+  become: true
+
+- name: Set default incoming policy to deny
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  become: true
+
+- name: Set default outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  become: true
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+  become: true

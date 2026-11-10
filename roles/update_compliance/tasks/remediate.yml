@@ -1,0 +1,6 @@
+---
+- name: Install available package upgrades
+  ansible.builtin.apt:
+    upgrade: safe
+    update_cache: true
+  become: true

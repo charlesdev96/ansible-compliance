@@ -1,0 +1,18 @@
+---
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Find prohibited services that are active or enabled
+  ansible.builtin.set_fact:
+    prohibited_service_findings: "{{ prohibited_service_findings | default([]) + ([item] if ((item + '.service') in ansible_facts.services and (ansible_facts.services[item + '.service'].state == 'running' or ansible_facts.services[item + '.service'].status == 'enabled')) else []) }}"
+  loop: "{{ compliance_disabled_services }}"
+
+- name: Record service compliance result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'SVC-01',
+      'category': 'Services',
+      'title': 'Unnecessary remote-access services are stopped and disabled',
+      'status': 'COMPLIANT' if (prohibited_service_findings | default([]) | length == 0) else 'NON_COMPLIANT',
+      'detail': 'Active or enabled prohibited services: ' ~ ((prohibited_service_findings | default([])) | join(', ') if (prohibited_service_findings | default([]) | length > 0) else 'none detected')
+    } ] }}"

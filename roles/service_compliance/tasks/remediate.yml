@@ -1,0 +1,9 @@
+---
+- name: Stop and disable prohibited services if installed
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop: "{{ compliance_disabled_services }}"
+  failed_when: false
+  become: true

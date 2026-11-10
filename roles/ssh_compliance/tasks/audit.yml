@@ -1,0 +1,17 @@
+---
+- name: Read effective SSH daemon settings
+  ansible.builtin.command: sshd -T
+  register: sshd_effective
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Record SSH review result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'SSH-01',
+      'category': 'SSH',
+      'title': 'Review root login, password authentication and maximum authentication attempts',
+      'status': 'REVIEW',
+      'detail': 'sshd -T available=' ~ ((sshd_effective.rc == 0) | string) ~ '. SSH is not automatically modified to avoid lockout. Review permitrootlogin, passwordauthentication and maxauthtries.'
+    } ] }}"

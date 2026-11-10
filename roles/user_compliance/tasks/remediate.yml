@@ -1,0 +1,6 @@
+---
+- name: Keep account remediation manual
+  ansible.builtin.debug:
+    msg: >-
+      User/password and sudo membership changes are intentionally not automated.
+      Review USER-01 findings and make approved account changes manually.

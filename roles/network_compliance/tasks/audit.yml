@@ -1,0 +1,22 @@
+---
+- name: Read configured kernel network parameters
+  ansible.builtin.command: "sysctl -n {{ item.key }}"
+  loop: "{{ compliance_network_settings | dict2items }}"
+  register: sysctl_checks
+  changed_when: false
+  failed_when: false
+
+- name: Build network policy findings
+  ansible.builtin.set_fact:
+    network_findings: "{{ network_findings | default([]) + ([item.item.key ~ ' expected ' ~ item.item.value ~ ' but observed ' ~ (item.stdout | default('unavailable'))] if (item.rc != 0 or (item.stdout | trim) != item.item.value) else []) }}"
+  loop: "{{ sysctl_checks.results }}"
+
+- name: Record network compliance result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'NET-01',
+      'category': 'Network',
+      'title': 'Selected IPv4 forwarding and redirect settings match policy',
+      'status': 'COMPLIANT' if (network_findings | default([]) | length == 0) else 'NON_COMPLIANT',
+      'detail': (network_findings | default(['Configured network parameters match policy']) | join('; '))
+    } ] }}"

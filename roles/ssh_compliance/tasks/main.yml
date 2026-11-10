@@ -1,0 +1,8 @@
+---
+- name: Run audit checks
+  ansible.builtin.include_tasks: audit.yml
+  when: compliance_mode == 'audit'
+
+- name: Run remediation tasks
+  ansible.builtin.include_tasks: remediate.yml
+  when: compliance_mode == 'remediate'

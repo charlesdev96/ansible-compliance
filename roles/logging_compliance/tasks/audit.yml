@@ -1,0 +1,27 @@
+---
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Check whether rsyslog package is installed
+  ansible.builtin.command: dpkg-query -W -f='${Status}' rsyslog
+  register: rsyslog_package
+  changed_when: false
+  failed_when: false
+
+- name: Determine whether journald is running
+  ansible.builtin.set_fact:
+    journald_running: "{{ 'systemd-journald.service' in ansible_facts.services and ansible_facts.services['systemd-journald.service'].state == 'running' }}"
+
+- name: Determine whether rsyslog is running
+  ansible.builtin.set_fact:
+    rsyslog_running: "{{ rsyslog_package.rc == 0 and 'rsyslog.service' in ansible_facts.services and ansible_facts.services['rsyslog.service'].state == 'running' }}"
+
+- name: Record logging compliance result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'LOG-01',
+      'category': 'Logging',
+      'title': 'At least one system logging service is running',
+      'status': 'COMPLIANT' if (journald_running or rsyslog_running) else 'NON_COMPLIANT',
+      'detail': 'journald running=' ~ (journald_running | string) ~ '; rsyslog running=' ~ (rsyslog_running | string)
+    } ] }}"

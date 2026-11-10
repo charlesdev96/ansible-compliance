@@ -1,0 +1,7 @@
+---
+- name: Apply configured file permissions
+  ansible.builtin.file:
+    path: "{{ item.key }}"
+    mode: "{{ item.value }}"
+  loop: "{{ compliance_file_permissions | dict2items }}"
+  become: true

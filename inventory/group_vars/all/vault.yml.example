@@ -1,0 +1,4 @@
+---
+# Demonstration only. Replace with a non-sensitive example if required.
+# Never place real production credentials in this file.
+vault_demo_message: "Ansible Vault variable loaded successfully."

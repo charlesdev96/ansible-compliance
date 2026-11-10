@@ -1,0 +1,7 @@
+---
+- name: Keep SSH remediation manual
+  ansible.builtin.debug:
+    msg: >-
+      SSH configuration is intentionally not changed automatically.
+      Review the SSH policy and verify console or alternate access before
+      making any SSH changes.

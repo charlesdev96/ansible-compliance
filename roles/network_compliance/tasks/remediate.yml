@@ -1,0 +1,10 @@
+---
+- name: Persist configured network kernel parameters
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-ansible-compliance.conf
+  loop: "{{ compliance_network_settings | dict2items }}"
+  become: true

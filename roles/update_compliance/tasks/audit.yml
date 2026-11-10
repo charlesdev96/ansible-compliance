@@ -1,0 +1,17 @@
+---
+- name: List upgradeable packages
+  ansible.builtin.command: apt list --upgradable
+  register: upgrade_list
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Record update review result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'UPD-01',
+      'category': 'Security updates',
+      'title': 'Review available package updates',
+      'status': 'REVIEW' if (upgrade_list.stdout_lines | default([]) | length > 1) else 'COMPLIANT',
+      'detail': ((upgrade_list.stdout_lines[1:] | join('; ')) if (upgrade_list.stdout_lines | default([]) | length > 1) else 'No upgradeable packages reported by apt')
+    } ] }}"

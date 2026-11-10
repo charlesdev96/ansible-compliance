@@ -1,0 +1,23 @@
+---
+- name: Audit Ubuntu compliance controls
+  hosts: compliance_targets
+  gather_facts: true
+  become: false
+  vars:
+    compliance_mode: audit
+
+  pre_tasks:
+    - name: Initialise the compliance result list
+      ansible.builtin.set_fact:
+        compliance_results: []
+
+  roles:
+    - firewall_compliance
+    - user_compliance
+    - file_permissions
+    - service_compliance
+    - update_compliance
+    - logging_compliance
+    - network_compliance
+    - ssh_compliance
+    - compliance_report

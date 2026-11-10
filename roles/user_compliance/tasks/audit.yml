@@ -1,0 +1,40 @@
+---
+- name: Find local accounts with empty password fields
+  ansible.builtin.command: "awk -F: '($2 == \"\") {print $1}' /etc/shadow"
+  register: empty_password_users
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Read sudo group membership
+  ansible.builtin.command: getent group sudo
+  register: sudo_group
+  changed_when: false
+  failed_when: false
+
+- name: Read wheel group membership when available
+  ansible.builtin.command: getent group wheel
+  register: wheel_group
+  changed_when: false
+  failed_when: false
+
+- name: Build detected sudo-capable group members
+  ansible.builtin.set_fact:
+    detected_sudo_users: >-
+      {{
+        ((sudo_group.stdout.split(':')[-1].split(','))
+        if sudo_group.rc == 0 and (sudo_group.stdout.split(':')[-1] | length > 0) else [])
+        +
+        ((wheel_group.stdout.split(':')[-1].split(','))
+        if wheel_group.rc == 0 and (wheel_group.stdout.split(':')[-1] | length > 0) else [])
+      }}
+
+- name: Record user compliance result
+  ansible.builtin.set_fact:
+    compliance_results: "{{ compliance_results + [ {
+      'id': 'USER-01',
+      'category': 'User accounts',
+      'title': 'No empty passwords and only approved sudo group members',
+      'status': 'COMPLIANT' if ((empty_password_users.stdout | trim | length == 0) and (detected_sudo_users | difference(compliance_authorized_sudo_users) | length == 0)) else 'NON_COMPLIANT',
+      'detail': 'Empty-password accounts: ' ~ (empty_password_users.stdout | default('none')) ~ '; detected sudo group members: ' ~ (detected_sudo_users | join(', '))
+    } ] }}"

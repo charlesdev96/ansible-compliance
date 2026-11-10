@@ -1,0 +1,27 @@
+---
+# The audit playbook is read-only by design. Remediation is a separate playbook.
+compliance_authorized_sudo_users:
+  - vboxuser
+
+# Firewall: the port must match the SSH daemon's actual listening port.
+compliance_ssh_port: 22
+compliance_allow_firewall_remediation: true
+
+# Baseline file permissions.
+compliance_file_permissions:
+  /etc/passwd: '0644'
+  /etc/shadow: '0600'
+
+# Services that should not be enabled or running if installed.
+compliance_disabled_services:
+  - telnet
+  - rsh
+  - rlogin
+
+# Network kernel parameters.
+compliance_network_settings:
+  net.ipv4.ip_forward: '0'
+  net.ipv4.conf.all.accept_redirects: '0'
+  net.ipv4.conf.default.accept_redirects: '0'
+
+compliance_report_dir: "{{ playbook_dir }}/../reports"

@@ -1,0 +1,29 @@
+---
+- name: Create report directory on the controller
+  ansible.builtin.file:
+    path: "{{ compliance_report_dir }}"
+    state: directory
+    mode: '0750'
+  delegate_to: localhost
+  become: false
+
+- name: Write JSON compliance report
+  ansible.builtin.copy:
+    content: "{{ {'host': inventory_hostname, 'generated_at': ansible_date_time.iso8601, 'results': compliance_results} | to_nice_json }}{{ '\n' }}"
+    dest: "{{ compliance_report_dir }}/{{ inventory_hostname }}-compliance-report.json"
+    mode: '0640'
+  delegate_to: localhost
+  become: false
+
+- name: Generate HTML compliance report
+  ansible.builtin.template:
+    src: report.html.j2
+    dest: "{{ compliance_report_dir }}/{{ inventory_hostname }}-compliance-report.html"
+    mode: '0640'
+  delegate_to: localhost
+  become: false
+
+- name: Display compliance summary
+  ansible.builtin.debug:
+    msg: "{{ item.id }} | {{ item.category }} | {{ item.status }} | {{ item.title }}"
+  loop: "{{ compliance_results }}"

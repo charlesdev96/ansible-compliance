@@ -1,0 +1,8 @@
+---
+- name: Test Ansible Vault variable loading
+  hosts: compliance_targets
+  gather_facts: false
+  tasks:
+    - name: Display the demonstration Vault variable
+      ansible.builtin.debug:
+        msg: "{{ vault_demo_message }}"
